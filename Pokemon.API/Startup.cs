@@ -5,7 +5,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using Pokemon.Data.Extensions;
 using Pokemon.Data.Services;
 
 namespace Pokemon
@@ -22,11 +24,14 @@ namespace Pokemon
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddAutoMapper(typeof(Startup));
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Pokemon", Version = "v1" });
             });
+
+            services.AddSingleton<ILogger>(svc => svc.GetRequiredService<ILogger<Startup>>());
 
             services.AddHttpClient<PokeApiService>();
             services.AddScoped<IPokeApiService, PokeApiService>();
@@ -36,6 +41,10 @@ namespace Pokemon
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            // Global error handling
+            // Reference: https://code-maze.com/global-error-handling-aspnetcore/
+            app.ConfigureCustomExceptionMiddleware();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

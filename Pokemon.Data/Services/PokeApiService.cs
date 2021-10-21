@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -7,6 +6,7 @@ using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Pokemon.Data.Models;
+using System.Text;
 
 namespace Pokemon.Data.Services
 {
@@ -26,11 +26,10 @@ namespace Pokemon.Data.Services
         /// <summary>
         /// Get a resource by name
         /// </summary>
-        /// <returns>JObject</returns>
-        public async Task<Models.Pokemon> GetResource(string name)
+        /// <returns>Pokemon</returns>
+        public async Task<Models.Pokemon> GetPokemonAsync(string pokemonName)
         {
-            string url = $"{_configuration["Pokemon:ApiUrl"]}/pokemon-species/{name}";
-
+            string url = $"{_configuration["Pokemon:ApiBaseUrl"]}/pokemon-species/{pokemonName}";
             HttpResponseMessage response = await _httpClient.GetAsync(url);
 
             if (!response.IsSuccessStatusCode)
@@ -49,12 +48,14 @@ namespace Pokemon.Data.Services
         /// Get translated Pokemon description
         /// Given a Pokemon name, return translated Pokemon description and other basic information following some rules
         /// </summary>
-        /// <returns>JObject</returns>
-        public async Task<JObject> GetTranslatedPokemonDescription(string name)
+        /// <returns>Translation</returns>
+        private async Task<Translation> GetTranslatedPokemonDescriptionAsync(string textToBeTranslated, TranslationType translationType)
         {
-            string url = $"{_configuration["Pokemon:ApiUrl"]}/pokemon-species/{name}";
+            string url = $"{_configuration["FunTranslations:ApiBaseUrl"]}/translate/{translationType.Value}";
+            string json = JsonConvert.SerializeObject(new { text = textToBeTranslated });
 
-            HttpResponseMessage response = await _httpClient.GetAsync(url);
+            StringContent data = new(json, Encoding.UTF8, "application/json");
+            HttpResponseMessage response = await _httpClient.PostAsync(url, data);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -62,9 +63,42 @@ namespace Pokemon.Data.Services
             }
 
             string result = await response.Content.ReadAsStringAsync();
-            JObject json = JObject.Parse(result);
+            Translation translation = JsonConvert.DeserializeObject<Translation>(result);
 
-            return json;
+            return translation;
+        }
+
+
+        /// <summary>
+        /// Get Pokemon with translated description
+        /// </summary>
+        /// <param name="pokemonName"></param>
+        /// <returns>Pokemon</returns>
+        public async Task<Models.Pokemon> GetTranslatedPokemonAsync(string pokemonName)
+        {
+            Models.Pokemon pokemon = await GetPokemonAsync(pokemonName);
+            string descriptionToBeTranslated = GetFirstEnglishDescription(pokemon.Flavor_Text_Entries);
+            Translation translation = new ();
+
+            try
+            {
+                if (pokemon.Habitat.Name == "cave" && pokemon.IsLegendary)
+                {
+                    translation = await GetTranslatedPokemonDescriptionAsync(descriptionToBeTranslated, TranslationType.Yoda);
+                }
+                else
+                {
+                    translation = await GetTranslatedPokemonDescriptionAsync(descriptionToBeTranslated, TranslationType.Shakespeare);
+                }
+            }
+            catch
+            {
+                translation.Contents.Translated = descriptionToBeTranslated;
+            }
+
+            pokemon.Flavor_Text_Entries.First().Flavor_Text = translation.Contents.Translated;
+
+            return pokemon;
         }
 
 
@@ -75,7 +109,7 @@ namespace Pokemon.Data.Services
         /// <returns>string</returns>
         public string GetFirstEnglishDescription(List<FlavorText> flavor_text_entries)
         {
-            return flavor_text_entries.FirstOrDefault(x => x.Language.Name == "en")?.Flavor_Text;
+            return flavor_text_entries.First(x => x.Language.Name == "en").Flavor_Text;
         }
     }
 }
