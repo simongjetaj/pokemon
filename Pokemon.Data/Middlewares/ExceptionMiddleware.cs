@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Pokemon.Data.Exceptions;
 using Pokemon.Data.Models;
+using Pokemon.Data.Utils;
 using System;
 using System.Linq;
 using System.Net;
@@ -15,7 +16,7 @@ namespace Pokemon.Data.Middlewares
     {
         private readonly RequestDelegate _next;
         private readonly ILogger _logger;
-        private const string LOG_REFERENCE_ID = "LogReferenceId";
+
 
         public ExceptionMiddleware(RequestDelegate next, ILogger logger)
         {
@@ -24,7 +25,7 @@ namespace Pokemon.Data.Middlewares
         }
 
 
-        public async Task InvokeAsync(HttpContext httpContext, IWebHostEnvironment env)
+        public async Task InvokeAsync(HttpContext httpContext, IHostEnvironment env)
         {
             try
             {
@@ -33,19 +34,19 @@ namespace Pokemon.Data.Middlewares
             catch (PokemonException ex)
             {
                 _logger.LogError($"Something went wrong: {ex}. " +
-                    $"Log Reference ID: {httpContext.Request.Headers.FirstOrDefault(x => x.Key == LOG_REFERENCE_ID).Value}");
+                    $"Log Reference ID: {httpContext.Request.Headers.FirstOrDefault(x => x.Key == Constants.LOG_REFERENCE_ID).Value}");
                 await HandleExceptionAsync(httpContext, env, ex);
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Something went wrong: {ex}. " +
-                    $"Log Reference ID: {httpContext.Request.Headers.FirstOrDefault(x => x.Key == LOG_REFERENCE_ID).Value}");
+                    $"Log Reference ID: {httpContext.Request.Headers.FirstOrDefault(x => x.Key == Constants.LOG_REFERENCE_ID).Value}");
                 await HandleExceptionAsync(httpContext, env, ex);
             }
         }
 
 
-        private static Task HandleExceptionAsync(HttpContext httpContext, IWebHostEnvironment environment, PokemonException exception)
+        private static Task HandleExceptionAsync(HttpContext httpContext, IHostEnvironment environment, PokemonException exception)
         {
             httpContext.Response.ContentType = "application/json";
             httpContext.Response.StatusCode = exception.PokemonError.StatusCode;
@@ -55,12 +56,12 @@ namespace Pokemon.Data.Middlewares
                 StatusCode = httpContext.Response.StatusCode,
                 ErrorCode = exception.PokemonError.ErrorCode,
                 Message = !environment.IsProduction() ? exception.Message : "An error has occurred and we're working to fix the problem! We'll be up and running shortly.",
-                LogReferenceId = httpContext.Request.Headers.FirstOrDefault(x => x.Key == LOG_REFERENCE_ID).Value
+                LogReferenceId = httpContext.Request.Headers.FirstOrDefault(x => x.Key == Constants.LOG_REFERENCE_ID).Value
             }.ToString());
         }
 
 
-        private static Task HandleExceptionAsync(HttpContext httpContext, IWebHostEnvironment environment, Exception exception)
+        private static Task HandleExceptionAsync(HttpContext httpContext, IHostEnvironment environment, Exception exception)
         {
             httpContext.Response.ContentType = "application/json";
             httpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
@@ -69,7 +70,7 @@ namespace Pokemon.Data.Middlewares
             {
                 StatusCode = httpContext.Response.StatusCode,
                 Message = !environment.IsProduction() ? exception.Message : "An error has occurred and we're working to fix the problem! We'll be up and running shortly.",
-                LogReferenceId = httpContext.Request.Headers.FirstOrDefault(x => x.Key == LOG_REFERENCE_ID).Value
+                LogReferenceId = httpContext.Request.Headers.FirstOrDefault(x => x.Key == Constants.LOG_REFERENCE_ID).Value
             }.ToString());
         }
     }

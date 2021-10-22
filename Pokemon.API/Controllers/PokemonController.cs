@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Pokemon.Data.Exceptions;
 using Pokemon.Data.Models;
 using Pokemon.Data.Services;
 using System.Threading.Tasks;
@@ -12,7 +14,7 @@ namespace Pokemon.Controllers
     public class PokemonController : ControllerBase
     {
         private readonly ILogger<PokemonController> _logger;
-        private readonly PokeApiService _pokeApiService;
+        private readonly IPokemonApiService _pokeApiService;
         private readonly IMapper _mapper;
 
         /// <summary>
@@ -20,7 +22,7 @@ namespace Pokemon.Controllers
         /// </summary>
         /// <param name="logger"></param>
         /// <param name="pokeApiService"></param>
-        public PokemonController(ILogger<PokemonController> logger, IMapper mapper, PokeApiService pokeApiService)
+        public PokemonController(ILogger<PokemonController> logger, IMapper mapper, IPokemonApiService pokeApiService)
         {
             _logger = logger;
             _mapper = mapper;
@@ -35,6 +37,8 @@ namespace Pokemon.Controllers
         /// <returns>PokemonViewModel</returns>
         [Route("{pokemonName}")]
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<PokemonViewModel>> GetPokemon(string pokemonName)
         {
             Data.Models.Pokemon pokemon = await _pokeApiService.GetPokemonAsync(pokemonName);
@@ -56,6 +60,8 @@ namespace Pokemon.Controllers
         /// <returns>PokemonViewModel</returns>
         [Route("translated/{pokemonName}")]
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<PokemonViewModel>> GetTranslatedPokemon(string pokemonName)
         {
             Data.Models.Pokemon translatedPokemon = await _pokeApiService.GetTranslatedPokemonAsync(pokemonName);

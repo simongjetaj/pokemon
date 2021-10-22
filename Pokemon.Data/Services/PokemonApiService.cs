@@ -7,16 +7,17 @@ using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Pokemon.Data.Models;
 using System.Text;
+using Pokemon.Data.Exceptions;
 
 namespace Pokemon.Data.Services
 {
-    public class PokeApiService : IPokeApiService
+    public class PokemonApiService : IPokemonApiService
     {
-        private readonly ILogger<PokeApiService> _logger;
+        private readonly ILogger<PokemonApiService> _logger;
         private readonly HttpClient _httpClient;
         public IConfiguration _configuration;
 
-        public PokeApiService(ILogger<PokeApiService> logger, HttpClient httpClient, IConfiguration configuration)
+        public PokemonApiService(ILogger<PokemonApiService> logger, HttpClient httpClient, IConfiguration configuration)
         {
             _logger = logger;
             _httpClient = httpClient;
@@ -77,8 +78,14 @@ namespace Pokemon.Data.Services
         public async Task<Models.Pokemon> GetTranslatedPokemonAsync(string pokemonName)
         {
             Models.Pokemon pokemon = await GetPokemonAsync(pokemonName);
+
+            if (pokemon == null)
+            {
+                return null;
+            }
+
             string descriptionToBeTranslated = GetFirstEnglishDescription(pokemon.Flavor_Text_Entries);
-            Translation translation = new ();
+            Translation translation = new();
 
             try
             {
@@ -109,6 +116,11 @@ namespace Pokemon.Data.Services
         /// <returns>string</returns>
         public string GetFirstEnglishDescription(List<FlavorText> flavor_text_entries)
         {
+            if (!flavor_text_entries.Any())
+            {
+                throw new PokemonException(PokemonError.BadRequest, $"Flavor text entries must not be empty.");
+            }
+
             return flavor_text_entries.First(x => x.Language.Name == "en").Flavor_Text;
         }
     }

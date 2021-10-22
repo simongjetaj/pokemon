@@ -33,8 +33,8 @@ namespace Pokemon
 
             services.AddSingleton<ILogger>(svc => svc.GetRequiredService<ILogger<Startup>>());
 
-            services.AddHttpClient<PokeApiService>();
-            services.AddScoped<IPokeApiService, PokeApiService>();
+            services.AddHttpClient<PokemonApiService>();
+            services.AddScoped<IPokemonApiService, PokemonApiService>();
             services.TryAddTransient<IHttpContextAccessor, HttpContextAccessor>();
         }
 
@@ -47,7 +47,7 @@ namespace Pokemon
 
             if (env.IsDevelopment())
             {
-                app.UseDeveloperExceptionPage();
+                //app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Pokemon v1"));
             }
@@ -57,6 +57,10 @@ namespace Pokemon
             app.UseRouting();
 
             app.UseAuthorization();
+
+            // Log requests and responses 
+            // Reference: https://elanderson.net/2019/12/log-requests-and-responses-in-asp-net-core-3/
+            app.UseRequestResponseLogging();
 
             app.UseEndpoints(endpoints =>
             {

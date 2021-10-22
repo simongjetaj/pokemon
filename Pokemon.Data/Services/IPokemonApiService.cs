@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Pokemon.Data.Services
 {
-    public interface IPokeApiService
+    public interface IPokemonApiService
     {
         Task<Models.Pokemon> GetPokemonAsync(string name);
         Task<Models.Pokemon> GetTranslatedPokemonAsync(string pokemonName);
