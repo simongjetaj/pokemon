@@ -45,7 +45,7 @@ namespace Pokemon.Controllers
 
             if (pokemon == null)
             {
-                return NotFound();
+                throw new PokemonException(PokemonError.NotFoundRequest, $"Pokemon with name {pokemonName} not found!");
             }
 
             PokemonViewModel pokemonViewModel = _mapper.Map<PokemonViewModel>(pokemon);
@@ -68,7 +68,7 @@ namespace Pokemon.Controllers
 
             if (translatedPokemon == null)
             {
-                return NotFound();
+                throw new PokemonException(PokemonError.NotFoundRequest, $"Pokemon with name {pokemonName} not found!");
             }
 
             PokemonViewModel pokemonViewModel = _mapper.Map<PokemonViewModel>(translatedPokemon);

@@ -19,5 +19,13 @@ namespace Pokemon.Data.Exceptions
                 return new PokemonError((int)HttpStatusCode.BadRequest, "bad_request"); 
             } 
         }
+
+        public static PokemonError NotFoundRequest
+        {
+            get
+            {
+                return new PokemonError((int)HttpStatusCode.NotFound, "not_found_request");
+            }
+        }
     }
 }

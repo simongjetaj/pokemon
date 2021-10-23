@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Pokemon.API.Profiles;
 using Pokemon.Controllers;
+using Pokemon.Data.Exceptions;
 using Pokemon.Data.Models;
 using Pokemon.Data.Services;
 using System.Collections.Generic;
@@ -23,7 +24,7 @@ namespace Pokemon.Tests
         {
             if (_mapper == null)
             {
-                var mappingConfig = new MapperConfiguration(mc =>
+                MapperConfiguration mappingConfig = new (mc =>
                 {
                     mc.AddProfile(new PokemonProfile());
                 });
@@ -40,34 +41,32 @@ namespace Pokemon.Tests
                 .Setup(x => x.GetPokemonAsync(It.IsAny<string>()))
                 .ReturnsAsync((Data.Models.Pokemon)null);
 
-            var controller = new PokemonController(loggerStub.Object, null, serviceStub.Object);
-
-            // Act
-            var result = await controller.GetPokemon(It.IsAny<string>());
+            PokemonController controller = new (loggerStub.Object, _mapper, serviceStub.Object);
 
             // Assert
-            Assert.IsType<NotFoundResult>(result.Result);
+            Task<PokemonException> ex = Assert.ThrowsAsync<PokemonException>(async () => await controller.GetPokemon(It.IsAny<string>()));
+            Assert.Equal((await ex).PokemonError.StatusCode, StatusCodes.Status404NotFound);
         }
 
         [Fact]
         public async Task GetPokemon_ReturnsExpectedItem()
         {
             // Arrange
-            var expectedPokemon = CreateRandomPokemon();
-            var expectedPokemonViewModel = CreateRandomPokemonViewModel();
+            Data.Models.Pokemon expectedPokemon = CreateRandomPokemon();
+            PokemonViewModel expectedPokemonViewModel = CreateRandomPokemonViewModel();
 
             serviceStub
                 .Setup(x => x.GetPokemonAsync(It.IsAny<string>()))
                 .ReturnsAsync(expectedPokemon);
-  
-            var controller = new PokemonController(loggerStub.Object, _mapper, serviceStub.Object);
+
+            PokemonController controller = new (loggerStub.Object, _mapper, serviceStub.Object);
 
             // Act
-            var result = await controller.GetPokemon(It.IsAny<string>());
+            ActionResult<PokemonViewModel> result = await controller.GetPokemon(It.IsAny<string>());
 
             // Assert
             Assert.NotNull(result);
-            var okObjectResult = (result.Result as OkObjectResult);
+            OkObjectResult okObjectResult = (result.Result as OkObjectResult);
             PokemonViewModel pokemonViewModel = (PokemonViewModel)okObjectResult.Value;
             Assert.IsType<PokemonViewModel>(pokemonViewModel);
             Assert.Equal(okObjectResult.StatusCode, StatusCodes.Status200OK);
