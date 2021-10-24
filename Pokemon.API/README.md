@@ -21,8 +21,9 @@ Install the following:
 ## Main Features
 - Swagger documentation
 - Global error handling
-- Request/Response logging
-- Unit Test examples
+- Request/response logging
+- Unit test examples
 - Dockerfile support
 - Git history (break-down project)
 - Automapper
+- Rate limiting

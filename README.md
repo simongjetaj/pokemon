@@ -7,8 +7,8 @@ Install the following:
 2. .NET Core SDK. The SDK also includes the Runtime. https://dotnet.microsoft.com/download
 3. The C# extension from the VS Code Marketplace. https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csharp
 
-## Run 
-1. Open a terminal/command prompt and download the app by entering the following command in a terminal: 
+## Run
+1. Open a terminal/command prompt and download the app by entering the following command in a terminal:
 	`git clone git@github.com:simongjetaj/pokemon.git`
 2. Navigate to the folder where the app is created
 3. When the project folder is first opened in VS Code:
@@ -21,8 +21,9 @@ Install the following:
 ## Main Features
 - Swagger documentation
 - Global error handling
-- Request/Response logging
-- Unit Test examples
+- Request/response logging
+- Unit test examples
 - Dockerfile support
 - Git history (break-down project)
 - Automapper
+- Rate limiting
